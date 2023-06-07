@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: URL SHORTENER APP
+Resources:
+  CreateShortUrl:
+    Type: AWS::Serverless::Function
+    Properties:
+     Handler: index.handler
+     Runtime: nodejs18.x
+     CodeUri: ./functions/create
+     Description: This function short a url
+     Policies:
+       - DynamoDBCrudPolicy:
+          TableName: !Ref ShortUrl
+     Environment:
+        Variables:
+          TABLE_NAME: !Ref ShortUrl
+     Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Method: POST
+            Path: /create/{userSession}
+            ApiId: !Ref HttpApi
+  ListShortedUrl:
+    Type: AWS::Serverless::Function
+    Properties:
+     Handler: index.handler
+     Runtime: nodejs18.x
+     CodeUri: ./functions/list
+     Description: This function list a shorted urls
+     Policies:
+       - DynamoDBCrudPolicy:
+          TableName: !Ref ShortUrl
+     Environment:
+        Variables:
+          TABLE_NAME: !Ref ShortUrl
+     Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Method: GET
+            Path: /list/{userSession} 
+            ApiId: !Ref HttpApi
+  RedirectToUrl:
+    Type: AWS::Serverless::Function
+    Properties:
+     Handler: index.handler
+     Runtime: nodejs18.x
+     CodeUri: ./functions/redirect
+     Description: This function redirect to original url
+     Policies:
+       - DynamoDBCrudPolicy:
+          TableName: !Ref ShortUrl
+     Environment:
+        Variables:
+          TABLE_NAME: !Ref ShortUrl
+     Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            Method: GET
+            Path: /{alias}
+            ApiId: !Ref HttpApi             
+  ShortUrl:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey: 
+        Name: id
+        Type: Number
+      TableName: ShortUrl
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: "api-shorturl"
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"   
+        AllowOrigins: 
+          - "*"      
